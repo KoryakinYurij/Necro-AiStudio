@@ -1,0 +1,15 @@
+{
+  "name": "necro-roguelite",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "python3 tools/build.py",
+    "lint": "node --check server.js && node --check src/nx_exploration.js && node --check src/nx_ext.js && node --check src/nx_gfx.js && node --check src/nx_progression.js",
+    "test": "node tests/smoke-test.js"
+  },
+  "dependencies": {
+    "jsdom": "^29.1.1"
+  }
+}
