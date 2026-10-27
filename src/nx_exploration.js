@@ -586,6 +586,9 @@
           } else if (!m.dead) {
             m.hp = m.maxhp || m.hp;
           }
+          if (!m.dead) {
+            visualBursts.push({ kind: 'minion_ward', x: m.x, y: m.y, maxR: 26, col: '#8ef7c9', left: 0.45, maxT: 0.45 });
+          }
         });
         if (revived === 0) {
           G.minions.push({
@@ -594,9 +597,11 @@
             hp: 115, maxhp: 115, dmg: 26, spd: 145,
             r: 11, cd: 0, resp: 0, dead: false, ang: 0, ph: 0
           });
+          visualBursts.push({ kind: 'minion_ward', x: P.x + 24, y: P.y, maxR: 28, col: '#8ef7c9', left: 0.45, maxT: 0.45 });
         }
       }
-      visualBursts.push({ x: P.x, y: P.y, maxR: 135, col: '#8ef7c9', left: 0.55, maxT: 0.55 });
+      G.shake = Math.max(G.shake || 0, 5);
+      visualBursts.push({ kind: 'bastion', x: P.x, y: P.y, maxR: 138, col: '#8ef7c9', left: 0.65, maxT: 0.65 });
       notify('КОСТЯНОЙ БАСТИОН: СВИТА ИСЦЕЛЕНА И УКРЫТА ЩИТОМ', '#8ef7c9');
     } else if (skill.id === 'detonate') {
       var cx = focusBanner ? focusBanner.x : P.x;
@@ -614,9 +619,13 @@
           e.slowT = Math.max(e.slowT || 0, 3.5);
           if (e.hp <= 0) e.dead = true;
           hits++;
+          if (hits <= 8) {
+            visualBursts.push({ kind: 'ash_hit', x: e.x, y: e.y, maxR: 34, col: '#ff5e6c', left: 0.42, maxT: 0.42 });
+          }
         }
       });
-      visualBursts.push({ x: cx, y: cy, maxR: rad, col: '#ff5e6c', left: 0.6, maxT: 0.6 });
+      G.shake = Math.max(G.shake || 0, 12);
+      visualBursts.push({ kind: 'detonate', x: cx, y: cy, maxR: rad, col: '#ff5e6c', left: 0.72, maxT: 0.72 });
       notify('ВЗРЫВ ПРАХА: ПОРАЖЕНО ЦЕЛЕЙ — ' + hits, '#ff6b7f');
     } else if (skill.id === 'dreadknight') {
       var kx = focusBanner ? focusBanner.x : (P.x + lastMoveDir.x * 48);
@@ -632,12 +641,14 @@
         spd: 148,
         r: 14, cd: 0, resp: 0, dead: false, ang: 0, ph: 0
       });
-      visualBursts.push({ x: kx, y: ky, maxR: 110, col: '#b657ff', left: 0.6, maxT: 0.6 });
+      G.shake = Math.max(G.shake || 0, 8);
+      visualBursts.push({ kind: 'dreadknight', x: kx, y: ky, maxR: 118, col: '#b657ff', left: 0.75, maxT: 0.75 });
       notify('СТРАЖ СКЛЕПА ПРИЗВАН В БОЙ!', '#b657ff');
     } else if (skill.id === 'rift') {
+      var ox = P.x, oy = P.y;
       var tx = focusBanner ? focusBanner.x : (P.x + lastMoveDir.x * 190);
       var ty = focusBanner ? focusBanner.y : (P.y + lastMoveDir.y * 190);
-      visualBursts.push({ x: P.x, y: P.y, maxR: 90, col: '#caa95b', left: 0.45, maxT: 0.45 });
+      visualBursts.push({ kind: 'rift_out', x: ox, y: oy, tx: tx, ty: ty, maxR: 92, col: '#caa95b', left: 0.52, maxT: 0.52 });
       P.x = tx;
       P.y = ty;
       P._lastX = tx;
@@ -660,9 +671,20 @@
           if (e.hp <= 0) e.dead = true;
         }
       });
-      visualBursts.push({ x: tx, y: ty, maxR: 120, col: '#ffd23f', left: 0.55, maxT: 0.55 });
+      G.shake = Math.max(G.shake || 0, 7);
+      visualBursts.push({ kind: 'rift_in', x: tx, y: ty, ox: ox, oy: oy, maxR: 125, col: '#ffd23f', left: 0.62, maxT: 0.62 });
       notify('ФАЗОВЫЙ СДВИГ: ЛЕГИОН ПЕРЕМЕЩЁН', '#ffd23f');
     }
+
+    try {
+      var slotBtn = document.querySelector('#nxExpGrimoireHud [data-skill="' + skill.id + '"]');
+      if (slotBtn) {
+        slotBtn.classList.remove('cast-flash');
+        void slotBtn.offsetWidth;
+        slotBtn.classList.add('cast-flash');
+        setTimeout(function () { slotBtn.classList.remove('cast-flash'); }, 360);
+      }
+    } catch (e) {}
 
     updateExpHudDom();
     updateGrimoireHudDom();
@@ -1125,7 +1147,9 @@
       var meta = getAreaMeta(run.seed, descriptor.area.x, descriptor.area.y);
       N.G.explorationMaxDanger = Math.max(N.G.explorationMaxDanger || 1, meta.danger || 1);
       gainExplorationEssence(25);
+      N.G.shake = Math.max(N.G.shake || 0, 5);
     }
+    visualBursts.push({ kind: 'seal_break', x: descriptor.x, y: descriptor.y, maxR: 110, col: '#8ef7c9', left: 0.65, maxT: 0.65 });
     awardSigils(1, 'Отряд зачищен');
     return true;
   }
@@ -1322,6 +1346,11 @@
     }
     gainExplorationEssence(30);
     awardSigils(2, 'Печать Места Силы');
+    var poiDesc = descriptorFor(run, id);
+    if (poiDesc) {
+      visualBursts.push({ kind: 'seal_claim', x: poiDesc.x, y: poiDesc.y, maxR: 145, col: '#ffd23f', left: 0.85, maxT: 0.85 });
+    }
+    if (game) game.shake = Math.max(game.shake || 0, 6);
 
     var root = document.getElementById('nxRuinsReward');
     var resume = !!(root && !root.classList.contains('hidden') && root._pausedByRuins && root._run === run && root._game === game && N.state === 'pause');
@@ -1406,6 +1435,8 @@
       obj.citadel.boss = boss;
       obj.citadel.status = 'active';
       N.G.explorationMaxDanger = Math.max(N.G.explorationMaxDanger || 1, 4);
+      N.G.shake = Math.max(N.G.shake || 0, 10);
+      visualBursts.push({ kind: 'detonate', x: obj.citadel.x, y: obj.citadel.y, maxR: 185, col: '#ff4757', left: 0.85, maxT: 0.85 });
       notify('ВЛАДЫКА ЦИТАДЕЛИ ПРОБУДИЛСЯ! (УГРОЗА IV)', '#ff4757');
     }
     return boss;
@@ -1515,6 +1546,8 @@
       }
       gainExplorationEssence(20 + lanternBonus + alchEss);
       if (N.recalc) N.recalc();
+      G.shake = Math.max(G.shake || 0, 5);
+      visualBursts.push({ kind: 'mound_raise', x: mound.x, y: mound.y, maxR: 98, col: '#8ef7c9', left: 0.68, maxT: 0.68 });
       notify('ВОССТАНИЕ ИЗ КУРГАНА: +' + (1 + alchLvl) + ' ВОИН(А) И +' + (20 + lanternBonus + alchEss) + ' ✦', '#8ef7c9');
     } else {
       // Blood & Soul Siphon: heal +40 HP and +35 Ult charge +45 Essence
@@ -1524,6 +1557,14 @@
       }
       G.ult = Math.min(100, (G.ult || 0) + 35);
       gainExplorationEssence(45 + lanternBonus + alchEss);
+      G.shake = Math.max(G.shake || 0, 4);
+      visualBursts.push({
+        kind: 'mound_siphon',
+        x: mound.x, y: mound.y,
+        tx: G.P ? G.P.x : mound.x,
+        ty: G.P ? G.P.y : mound.y,
+        maxR: 92, col: '#ff6b7f', left: 0.68, maxT: 0.68
+      });
       notify('ПОГЛОЩЕНИЕ ПРАХА: +' + healAmt + ' ОЗ, +35% ГНЕВА И +' + (45 + lanternBonus + alchEss) + ' ✦', '#ff6b7f');
     }
     updateExpHudDom();
@@ -1553,7 +1594,10 @@
           if (e.hp <= 0) e.dead = true;
         }
       });
-      visualBursts.push({ x: focusBanner.x, y: focusBanner.y, maxR: novaR, col: '#ffd23f', left: 0.45, maxT: 0.45 });
+      N.G.shake = Math.max(N.G.shake || 0, 6);
+      visualBursts.push({ kind: 'banner_drop', x: focusBanner.x, y: focusBanner.y, maxR: novaR, col: '#ffd23f', left: 0.55, maxT: 0.55 });
+    } else {
+      visualBursts.push({ kind: 'banner_drop', x: focusBanner.x, y: focusBanner.y, maxR: 78, col: '#ffd23f', left: 0.48, maxT: 0.48 });
     }
     notify('ЗНАМЯ ОХОТЫ УСТАНОВЛЕНО: ЛЕГИОН АТАКУЕТ ТОЧКУ', '#ffd23f');
     updateExpHudDom();
@@ -1634,7 +1678,8 @@
       gainExplorationEssence(55);
       G.B.spd = (G.B.spd || 0) + 8;
       if (N.recalc) N.recalc();
-      visualBursts.push({ x: anom.x, y: anom.y, maxR: 210, col: '#8ef7c9', left: 0.7, maxT: 0.7 });
+      G.shake = Math.max(G.shake || 0, 6);
+      visualBursts.push({ kind: 'anomaly_flare', anomKind: 'obelisk', x: anom.x, y: anom.y, maxR: 210, col: '#8ef7c9', left: 0.75, maxT: 0.75 });
       notify('ОБЕЛИСК ПРОЗРЕНИЯ: ОКРЕСТНЫЕ СЕКТОРЫ ОТКРЫТЫ (+55 ✦, +8% СКОРОСТИ)', '#8ef7c9');
     } else if (kind === 'soul_well') {
       gainExplorationEssence(100);
@@ -1647,7 +1692,8 @@
           m.hp = m.maxhp || 110;
         });
       }
-      visualBursts.push({ x: anom.x, y: anom.y, maxR: 175, col: '#b657ff', left: 0.65, maxT: 0.65 });
+      G.shake = Math.max(G.shake || 0, 6);
+      visualBursts.push({ kind: 'anomaly_flare', anomKind: 'soul_well', x: anom.x, y: anom.y, maxR: 175, col: '#b657ff', left: 0.72, maxT: 0.72 });
       notify('КОЛОДЕЦ ДУШ: +100 ✦ ЭССЕНЦИИ, СБРОС ОТКАТОВ ГРИМУАРА И ИСЦЕЛЕНИЕ СВИТЫ', '#b657ff');
     } else {
       var costHp = Math.max(5, Math.floor((P.hp || 80) * 0.2));
@@ -1663,7 +1709,8 @@
         });
       }
       if (N.recalc) N.recalc();
-      visualBursts.push({ x: anom.x, y: anom.y, maxR: 185, col: '#ff5e6c', left: 0.65, maxT: 0.65 });
+      G.shake = Math.max(G.shake || 0, 8);
+      visualBursts.push({ kind: 'anomaly_flare', anomKind: 'cursed_shrine', x: anom.x, y: anom.y, maxR: 185, col: '#ff5e6c', left: 0.75, maxT: 0.75 });
       notify('АЛТАРЬ КРОВИ: +1 ❖ ПЕЧАТЬ ИСХОДА, +25% МОЩИ И РЫЦАРЬ КОСТИ!', '#ff6b7f');
     }
     updateExpHudDom();
@@ -2294,6 +2341,40 @@
 
     if (isActive) {
       drawRunePerimeter(ctx, sx, sy, LEASH_RADIUS, '#ff4757', true, 0.4, t);
+      // Sovereign of Ash live Boss Dread-Aura & Throne Tether
+      if (cit.boss && !cit.boss.dead) {
+        var bp = N.w2s(cit.boss.x, cit.boss.y);
+        var bsx = bp[0], bsy = bp[1];
+        // Nether tether from Obsidian Throne to the Sovereign
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 71, 87, 0.36)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+        ctx.lineDashOffset = -t * 32;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty - 8);
+        ctx.quadraticCurveTo((tx + bsx) * 0.5, Math.min(ty, bsy) - 34, bsx, bsy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Rotating crimson-gold dread sigil beneath the Boss
+        drawExpGlow(ctx, '#ff4757', bsx, bsy, 54, 0.48);
+        ctx.strokeStyle = '#ff4757';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.ellipse(bsx, bsy + 4, 34, 22, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        for (var bi = 0; bi < 4; bi++) {
+          var ba = t * 2.8 + (bi * Math.PI) / 2;
+          var ox = bsx + Math.cos(ba) * 34;
+          var oy = bsy + 4 + Math.sin(ba) * 22;
+          drawExpGlow(ctx, '#ffd23f', ox, oy, 10, 0.75);
+          ctx.fillStyle = '#ffd23f';
+          ctx.beginPath();
+          ctx.arc(ox, oy, 2.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
     }
     ctx.restore();
   }
@@ -3029,38 +3110,332 @@
 
   function drawGrimoireBursts(ctx, cam) {
     if (!visualBursts.length || !N.w2s) return;
+    var t = (N.G && N.G.time) || (typeof performance !== 'undefined' ? performance.now() / 1000 : 0);
     ctx.save();
     for (var i = 0; i < visualBursts.length; i++) {
       var b = visualBursts[i];
       var p = N.w2s(b.x, b.y);
       var sx = p[0], sy = p[1];
-      if (sx < -250 || sx > cam.w + 250 || sy < -250 || sy > cam.h + 250) continue;
-      var u = 1 - Math.max(0, b.left / (b.maxT || 0.5));
-      var r = Math.max(8, b.maxR * u);
+      if (sx < -320 || sx > cam.w + 320 || sy < -320 || sy > cam.h + 320) continue;
+      var u = Math.max(0, Math.min(1, 1 - Math.max(0, b.left / (b.maxT || 0.5))));
+      var fade = Math.max(0, 1 - u);
+      var easeOut = 1 - Math.pow(1 - u, 2.2);
+      var r = Math.max(8, b.maxR * easeOut);
       var col = b.col || '#8ef7c9';
+      var kind = b.kind || 'generic';
 
-      drawExpGlow(ctx, col, sx, sy, r * 1.15, (1 - u) * 0.55);
+      ctx.save();
+      drawExpGlow(ctx, col, sx, sy, r * 1.18, fade * 0.58);
 
-      ctx.globalAlpha = Math.max(0.08, (1 - u) * 0.82);
-      ctx.strokeStyle = col;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI * 2);
-      ctx.stroke();
+      if (kind === 'bastion') {
+        // [1] BONE BASTION: Octagonal runic dome + 8 orbiting gothic bone tower-shields + rising heal crosses
+        ctx.globalAlpha = fade * 0.26;
+        ctx.fillStyle = '#8ef7c9';
+        ctx.beginPath();
+        for (var k = 0; k < 8; k++) {
+          var ka = (k / 8) * Math.PI * 2 + u * 0.6;
+          var kx = sx + Math.cos(ka) * (r * 0.88);
+          var ky = sy + Math.sin(ka) * (r * 0.68);
+          if (k === 0) ctx.moveTo(kx, ky); else ctx.lineTo(kx, ky);
+        }
+        ctx.closePath();
+        ctx.fill();
 
-      // Inner runic shockwave ring
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([8, 6]);
-      ctx.beginPath();
-      ctx.arc(sx, sy, r * 0.68, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
+        ctx.globalAlpha = fade * 0.88;
+        ctx.strokeStyle = '#8ef7c9';
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
 
-      ctx.globalAlpha = Math.max(0.04, (1 - u) * 0.22);
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.arc(sx, sy, r * 0.85, 0, Math.PI * 2);
-      ctx.fill();
+        // Inner golden ward ring
+        ctx.strokeStyle = '#ffd23f';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, r * 0.62, r * 0.48, -u * 1.2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 8 Orbiting Bone Tower-Shields locking into phalanx formation
+        var shieldR = r * 0.78;
+        for (var si = 0; si < 8; si++) {
+          var sa = (si / 8) * Math.PI * 2 + u * 1.8;
+          var shx = sx + Math.cos(sa) * shieldR;
+          var shy = sy + Math.sin(sa) * (shieldR * 0.76);
+          ctx.save();
+          ctx.translate(shx, shy);
+          ctx.globalAlpha = fade * 0.95;
+          ctx.fillStyle = '#e3d8bd';
+          ctx.beginPath();
+          ctx.moveTo(-5, -7);
+          ctx.lineTo(5, -7);
+          ctx.lineTo(6, 1);
+          ctx.lineTo(0, 8);
+          ctx.lineTo(-6, 1);
+          ctx.closePath();
+          ctx.fill();
+          expStrokeInk(ctx, 1.3);
+          ctx.fillStyle = '#a3946f';
+          ctx.fillRect(-1.2, -5.5, 2.4, 11);
+          ctx.fillStyle = '#ffd23f';
+          ctx.beginPath();
+          ctx.arc(0, 0, 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Ascending emerald heal-sparks (+)
+        ctx.strokeStyle = '#d8ffe6';
+        ctx.lineWidth = 1.8;
+        for (var hi = 0; hi < 6; hi++) {
+          var ha = (hi / 6) * Math.PI * 2 + 0.4;
+          var hx = sx + Math.cos(ha) * (r * 0.42);
+          var hy = sy + Math.sin(ha) * (r * 0.3) - u * 34;
+          ctx.globalAlpha = fade * 0.9;
+          ctx.beginPath();
+          ctx.moveTo(hx - 3.5, hy); ctx.lineTo(hx + 3.5, hy);
+          ctx.moveTo(hx, hy - 3.5); ctx.lineTo(hx, hy + 3.5);
+          ctx.stroke();
+        }
+      } else if (kind === 'detonate') {
+        // [2] CORPSE-ASH DETONATION: Radial scorch fissures + double blast wave + flying bone shards + central skull shockwave
+        ctx.globalAlpha = fade * 0.85;
+        ctx.strokeStyle = '#ff4757';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ffd23f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r * 0.66, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 10 Jagged ground scorch fissures radiating from epicenter
+        ctx.strokeStyle = '#ff9f43';
+        ctx.lineWidth = 2;
+        for (var fi = 0; fi < 10; fi++) {
+          var fa = (fi / 10) * Math.PI * 2 + (fi % 2) * 0.14;
+          var fLen = r * (0.72 + (fi % 3) * 0.12);
+          var mx = sx + Math.cos(fa + 0.09) * (fLen * 0.52);
+          var my = sy + Math.sin(fa + 0.09) * (fLen * 0.52);
+          var ex = sx + Math.cos(fa) * fLen;
+          var ey = sy + Math.sin(fa) * fLen;
+          ctx.globalAlpha = fade * 0.78;
+          ctx.beginPath();
+          ctx.moveTo(sx + Math.cos(fa) * 10, sy + Math.sin(fa) * 10);
+          ctx.lineTo(mx, my);
+          ctx.lineTo(ex, ey);
+          ctx.stroke();
+        }
+
+        // 14 Flying bone splinters & crimson ash cinders
+        for (var bi = 0; bi < 14; bi++) {
+          var ba = (bi / 14) * Math.PI * 2 + 0.23;
+          var bd = r * (0.35 + ((bi * 7) % 5) * 0.16);
+          var bx = sx + Math.cos(ba) * bd;
+          var by = sy + Math.sin(ba) * bd - Math.sin(u * Math.PI) * 14;
+          ctx.save();
+          ctx.translate(bx, by);
+          ctx.rotate(ba + u * 5);
+          ctx.globalAlpha = fade * 0.92;
+          ctx.fillStyle = bi % 2 === 0 ? '#e8dfcf' : '#ff6b7f';
+          ctx.fillRect(-4.5, -1.6, 9, 3.2);
+          expStrokeInk(ctx, 1);
+          ctx.restore();
+        }
+
+        // Central expanding necrotic skull silhouette
+        if (u < 0.75) {
+          ctx.globalAlpha = (1 - u / 0.75) * 0.85;
+          drawMiniSkull(ctx, sx, sy - u * 18, 1.35 + u * 1.1, '#ff4757');
+        }
+      } else if (kind === 'dreadknight') {
+        // [3] CRYPT GUARDIAN SUMMON: Abyssal pentagram + sky-to-ground lightning pillar + erupting chains
+        drawRunePerimeter(ctx, sx, sy, r * 0.82, '#b657ff', true, fade * 0.9, t * 3);
+
+        // Sky-to-ground necromantic lightning bolt (strongest in first 65% of cast)
+        if (u < 0.75) {
+          var boltFade = 1 - u / 0.75;
+          drawExpGlow(ctx, '#b657ff', sx, sy - 70, 68, boltFade * 0.65);
+          ctx.globalAlpha = boltFade * 0.95;
+          ctx.strokeStyle = '#f3d9ff';
+          ctx.lineWidth = 4.5 * boltFade;
+          ctx.beginPath();
+          ctx.moveTo(sx - 8, sy - 210);
+          ctx.lineTo(sx + 11, sy - 145);
+          ctx.lineTo(sx - 9, sy - 92);
+          ctx.lineTo(sx + 7, sy - 42);
+          ctx.lineTo(sx, sy);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#b657ff';
+          ctx.lineWidth = 9 * boltFade;
+          ctx.globalAlpha = boltFade * 0.4;
+          ctx.stroke();
+        }
+
+        // 6 Erupting obsidian chains around the summoned Dreadknight
+        ctx.strokeStyle = '#d8b4fe';
+        ctx.lineWidth = 2.2;
+        for (var ci = 0; ci < 6; ci++) {
+          var ca = (ci / 6) * Math.PI * 2 + u * 0.8;
+          var cx1 = sx + Math.cos(ca) * 14;
+          var cy1 = sy + Math.sin(ca) * 10;
+          var cx2 = sx + Math.cos(ca) * (r * 0.78);
+          var cy2 = sy + Math.sin(ca) * (r * 0.56) - (1 - u) * 26;
+          ctx.globalAlpha = fade * 0.85;
+          ctx.beginPath();
+          ctx.moveTo(cx1, cy1);
+          ctx.lineTo(cx2, cy2);
+          ctx.stroke();
+        }
+      } else if (kind === 'rift_out' || kind === 'rift_in') {
+        // [4] PHASE RIFT: Dimensional star-slash tear + warp lightning threads connecting origin & destination
+        var starR = kind === 'rift_out' ? b.maxR * (1 - u * 0.65) : r;
+        ctx.globalAlpha = fade * 0.92;
+        ctx.fillStyle = kind === 'rift_out' ? '#241438' : '#fff2b2';
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (var pi = 0; pi < 8; pi++) {
+          var pa = (pi / 8) * Math.PI * 2 + u * (kind === 'rift_out' ? -2.4 : 2.4);
+          var pr = pi % 2 === 0 ? starR * 0.92 : starR * 0.26;
+          var px = sx + Math.cos(pa) * pr;
+          var py = sy + Math.sin(pa) * (pr * 0.78);
+          if (pi === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Warp trail threads between departure and arrival
+        if (kind === 'rift_in' && b.ox != null && b.oy != null) {
+          var op = N.w2s(b.ox, b.oy);
+          ctx.strokeStyle = '#ffd23f';
+          ctx.lineWidth = 2 * fade;
+          ctx.setLineDash([10, 8]);
+          ctx.beginPath();
+          ctx.moveTo(op[0], op[1]);
+          ctx.lineTo(sx, sy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      } else if (kind === 'mound_raise') {
+        // [R] CORPSE MOUND RAISE: Emerald resurrection pillar + rising skeletal blades
+        ctx.globalAlpha = fade * 0.38;
+        ctx.fillStyle = '#8ef7c9';
+        ctx.fillRect(sx - 18 * fade, sy - 135 * easeOut, 36 * fade, 135 * easeOut);
+
+        ctx.globalAlpha = fade * 0.88;
+        ctx.strokeStyle = '#8ef7c9';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, r * 0.85, r * 0.58, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        for (var ri = 0; ri < 5; ri++) {
+          var ra = (ri / 5) * Math.PI * 2 + u * 1.3;
+          var rx = sx + Math.cos(ra) * (r * 0.52);
+          var ry = sy + Math.sin(ra) * (r * 0.35) - u * 32;
+          ctx.fillStyle = '#e8dfcf';
+          ctx.beginPath();
+          ctx.arc(rx, ry, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+          expStrokeInk(ctx, 1);
+        }
+      } else if (kind === 'mound_siphon') {
+        // [Q] CORPSE MOUND SIPHON: Curved crimson blood-soul tethers flowing into the Necromancer
+        var targetX = sx, targetY = sy;
+        if (N.G && N.G.P) {
+          var tp = N.w2s(N.G.P.x, N.G.P.y);
+          targetX = tp[0];
+          targetY = tp[1];
+        }
+        ctx.globalAlpha = fade * 0.85;
+        ctx.strokeStyle = '#ff6b7f';
+        ctx.lineWidth = 2.2;
+        for (var si2 = 0; si2 < 5; si2++) {
+          var spread = (si2 - 2) * 18;
+          var cpx = (sx + targetX) * 0.5 - spread;
+          var cpy = Math.min(sy, targetY) - 28 - Math.abs(spread);
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo(cpx, cpy, targetX, targetY);
+          ctx.stroke();
+          // Traveling blood soul orb along curve
+          var tOrb = Math.min(1, (u * 1.25 + si2 * 0.12) % 1);
+          var invT = 1 - tOrb;
+          var ox2 = invT * invT * sx + 2 * invT * tOrb * cpx + tOrb * tOrb * targetX;
+          var oy2 = invT * invT * sy + 2 * invT * tOrb * cpy + tOrb * tOrb * targetY;
+          drawExpGlow(ctx, '#ff4757', ox2, oy2, 10, fade * 0.75);
+          ctx.fillStyle = '#ffd23f';
+          ctx.beginPath();
+          ctx.arc(ox2, oy2, 2.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (kind === 'banner_drop') {
+        // [F] FOCUS BANNER DROP: Falling war-standard + golden tactical command chevrons
+        var dropY = sy - Math.max(0, 1 - u * 3.2) * 120;
+        if (u < 0.35) {
+          ctx.globalAlpha = (1 - u / 0.35) * 0.85;
+          ctx.strokeStyle = '#ffd23f';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(sx, dropY - 45);
+          ctx.lineTo(sx, dropY);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = fade * 0.85;
+        ctx.strokeStyle = '#ffd23f';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, r * 0.86, r * 0.62, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        // 4 Inward tactical chevrons
+        for (var chi = 0; chi < 4; chi++) {
+          var cha = (chi / 4) * Math.PI * 2 + Math.PI / 4;
+          var chd = r * (0.95 - u * 0.35);
+          var chx = sx + Math.cos(cha) * chd;
+          var chy = sy + Math.sin(cha) * (chd * 0.72);
+          ctx.beginPath();
+          ctx.arc(chx, chy, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffd23f';
+          ctx.fill();
+        }
+      } else if (kind === 'seal_claim' || kind === 'seal_break' || kind === 'anomaly_flare') {
+        // GRAND SEAL / ANOMALY RUNIC FLARE
+        drawRunePerimeter(ctx, sx, sy, r * 0.9, col, true, fade * 0.85, t * 2.5);
+        ctx.globalAlpha = fade * 0.32;
+        ctx.fillStyle = col;
+        ctx.fillRect(sx - 22 * fade, sy - 160 * easeOut, 44 * fade, 160 * easeOut);
+        for (var oi = 0; oi < 6; oi++) {
+          var oa = (oi / 6) * Math.PI * 2 + u * 2.4;
+          var orx = sx + Math.cos(oa) * (r * 0.65);
+          var ory = sy + Math.sin(oa) * (r * 0.46) - u * 28;
+          ctx.globalAlpha = fade * 0.92;
+          ctx.fillStyle = '#ffd23f';
+          ctx.beginPath();
+          ctx.arc(orx, ory, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        // Generic / secondary hit shockwave
+        ctx.globalAlpha = Math.max(0.08, fade * 0.82);
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.arc(sx, sy, r * 0.68, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -3329,7 +3704,13 @@
       dangerEl.setAttribute('data-danger', String(curMeta.danger));
     }
     if (sealsEl && obj) {
-      sealsEl.textContent = obj.unlocked ? 'ПЕЧАТИ: ' + obj.seals + '/' + obj.requiredSeals + ' (ВРАТА ОТКРЫТЫ)' : 'ПЕЧАТИ: ' + obj.seals + ' / ' + obj.requiredSeals;
+      var pips = '';
+      for (var pi = 0; pi < obj.requiredSeals; pi++) {
+        pips += pi < obj.seals ? '◆' : '◇';
+      }
+      sealsEl.textContent = obj.unlocked
+        ? pips + ' ПЕЧАТИ: ' + obj.seals + '/' + obj.requiredSeals + ' (ВРАТА ОТКРЫТЫ)'
+        : pips + ' ПЕЧАТИ: ' + obj.seals + ' / ' + obj.requiredSeals;
       sealsEl.classList.toggle('ready', !!obj.unlocked);
     }
 
@@ -3425,10 +3806,13 @@
 
     if (compassEl) {
       compassEl.innerHTML = topRoutes.map(function (item) {
-        return '<div class="nx-compass-row" data-danger="' + item.danger + '">' +
-          '<span class="nx-c-dir">' + item.dir + '</span>' +
+        return '<div class="nx-compass-row" data-danger="' + item.danger + '" title="' + item.title + ' · Угр. ' + item.dangerRoman + ' · ' + item.status + '">' +
+          '<div class="nx-c-top">' +
+            '<span class="nx-c-dir">' + item.dir + '</span>' +
+            '<span class="nx-c-dist">' + item.distM + 'м · Угр. ' + item.dangerRoman + '</span>' +
+          '</div>' +
           '<span class="nx-c-name">' + item.icon + ' ' + item.title + '</span>' +
-          '<span class="nx-c-meta">Угр. ' + item.dangerRoman + ' · ' + item.distM + 'м · ' + item.status + '</span>' +
+          '<span class="nx-c-meta">' + item.status + '</span>' +
         '</div>';
       }).join('');
     }
@@ -3439,19 +3823,42 @@
       var canExtract = !!(obj && obj.unlocked && Math.hypot(P.x, P.y) <= SAFE_RADIUS + 40);
       if (mound || anom || canExtract) {
         actionsEl.classList.remove('hidden');
+
+        // Anchor floating world-space prompt directly above the interactive object on screen
+        var anchorWorldX = P.x, anchorWorldY = P.y - 44;
+        var promptKind = 'mound';
+        if (canExtract) {
+          anchorWorldX = 0; anchorWorldY = -54; promptKind = 'extract';
+        } else if (anom && (!mound || Math.hypot(anom.x - P.x, anom.y - P.y) <= Math.hypot(mound.x - P.x, mound.y - P.y))) {
+          anchorWorldX = anom.x; anchorWorldY = anom.y - 48; promptKind = 'anomaly';
+        } else if (mound) {
+          anchorWorldX = mound.x; anchorWorldY = mound.y - 42; promptKind = 'mound';
+        }
+
+        if (N.w2s && N.cam) {
+          var cam = N.cam();
+          var sp = N.w2s(anchorWorldX, anchorWorldY);
+          var clampedX = Math.max(160, Math.min((cam.w || 800) - 160, sp[0]));
+          var clampedY = Math.max(128, Math.min((cam.h || 600) - 125, sp[1]));
+          actionsEl.classList.add('nx-world-floating');
+          actionsEl.setAttribute('data-prompt-kind', promptKind);
+          actionsEl.style.left = Math.round(clampedX) + 'px';
+          actionsEl.style.top = Math.round(clampedY) + 'px';
+        }
+
         var actHtml = '';
         if (mound) {
           actHtml +=
-            '<button type="button" class="nx-act-btn raise" data-act="raise">[R] ПОДНЯТЬ СТРОЙ (+1 ВОИН, +15% УРОНА АРМИИ)</button>' +
-            '<button type="button" class="nx-act-btn siphon" data-act="siphon">[Q] ПОГЛОТИТЬ ПРАХ (+40 ОЗ, +35% ГНЕВА)</button>';
+            '<button type="button" class="nx-act-btn raise" data-act="raise"><kbd>R</kbd><span><b>ПОДНЯТЬ СТРОЙ</b><small>+1 воин · +15% урона армии</small></span></button>' +
+            '<button type="button" class="nx-act-btn siphon" data-act="siphon"><kbd>Q</kbd><span><b>ПОГЛОТИТЬ ПРАХ</b><small>+40 ОЗ · +35% гнева</small></span></button>';
         }
         if (anom) {
           actHtml +=
-            '<button type="button" class="nx-act-btn anomaly" data-act="anomaly">[G] ' + anom.title + ' (' + anom.short + ')</button>';
+            '<button type="button" class="nx-act-btn anomaly" data-act="anomaly"><kbd>G</kbd><span><b>' + anom.title + '</b><small>' + anom.short + '</small></span></button>';
         }
         if (canExtract) {
           actHtml +=
-            '<button type="button" class="nx-act-btn extract" data-act="extract">[F] ЗАВЕРШИТЬ ЭКСПЕДИЦИЮ (ЭВАКУАЦИЯ В СВЯТИЛИЩЕ)</button>';
+            '<button type="button" class="nx-act-btn extract" data-act="extract"><kbd>F</kbd><span><b>ВРАТА ИСХОДА</b><small>Завершить экспедицию и сохранить дары</small></span></button>';
         }
         if (actionsEl._lastHtml !== actHtml) {
           actionsEl._lastHtml = actHtml;

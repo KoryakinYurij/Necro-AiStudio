@@ -339,19 +339,21 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
 .nx-ruins-choice span { font: 500 11px Rubik, sans-serif; color: #c7bdcf; }
 @media (max-width: 650px) { .nx-ruins-choices { grid-template-columns: 1fr; } .nx-ruins-choice { min-height: 76px; } }
 
-/* ============ EXPLORATION · HUD, COMPASS & MENU BRIEFING ============ */
+/* ============ EXPLORATION · HUD, COMPASS & WORLD-SPACE PROMPTS (STEP C) ============ */
 .nx-exp-hud {
   position: fixed;
-  top: calc(18px + env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
+  top: calc(14px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   z-index: 6;
-  width: min(490px, calc(100vw - 150px));
-  background: linear-gradient(165deg, rgba(21, 14, 33, 0.9), rgba(11, 7, 18, 0.92));
-  border: 1px solid #4a3a68;
+  width: min(540px, calc(100vw - 150px));
+  background: linear-gradient(170deg, rgba(20, 13, 32, 0.88), rgba(10, 6, 17, 0.92));
+  border: 1px solid rgba(122, 98, 50, 0.65);
   border-radius: 10px;
-  padding: 9px 14px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 7px 12px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.95), 0 12px 30px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 230, 160, 0.12);
+  backdrop-filter: blur(4px);
   pointer-events: auto;
   color: #e6dfd1;
   font-family: Rubik, sans-serif;
@@ -361,38 +363,141 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 8px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(202, 169, 91, 0.16);
 }
-.nx-exp-zone { color: #f1d98d; font-family: Cinzel, serif; font-weight: 800; }
-.nx-exp-sep { color: #705e8c; }
-.nx-exp-danger { color: #8ef7c9; }
-.nx-exp-danger[data-danger="2"] { color: #ffd23f; }
-.nx-exp-danger[data-danger="3"] { color: #ff6b7f; }
-.nx-exp-seals { color: #caa95b; }
-.nx-exp-seals.ready { color: #ffd23f; text-shadow: 0 0 10px rgba(255, 210, 63, 0.5); }
+.nx-exp-zone {
+  color: #f1d98d;
+  font-family: Cinzel, serif;
+  font-weight: 800;
+  text-shadow: 0 1px 2px #000;
+}
+.nx-exp-sep { color: #685585; }
+.nx-exp-danger {
+  color: #8ef7c9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(142, 247, 201, 0.08);
+  border: 1px solid rgba(142, 247, 201, 0.25);
+}
+.nx-exp-danger[data-danger="2"] {
+  color: #ffd23f;
+  background: rgba(255, 210, 63, 0.09);
+  border-color: rgba(255, 210, 63, 0.3);
+}
+.nx-exp-danger[data-danger="3"] {
+  color: #ff6b7f;
+  background: rgba(255, 107, 127, 0.1);
+  border-color: rgba(255, 107, 127, 0.35);
+}
+.nx-exp-seals {
+  color: #d8be72;
+  letter-spacing: 0.08em;
+}
+.nx-exp-seals.ready {
+  color: #ffd23f;
+  text-shadow: 0 0 12px rgba(255, 210, 63, 0.65);
+}
+
+/* World-Space Diegetic Action Prompt (floats above Corpse Mounds, Anomalies & Portal) */
 .nx-exp-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin: 6px 0;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
+.nx-exp-actions.nx-world-floating {
+  position: fixed;
+  z-index: 11;
+  margin: 0;
+  padding: 6px;
+  transform: translate(-50%, -100%);
+  background: linear-gradient(165deg, rgba(18, 11, 29, 0.95), rgba(9, 5, 16, 0.97));
+  border: 1px solid #caa95b;
+  border-radius: 9px;
+  box-shadow: 0 0 0 1px #000, 0 12px 28px rgba(0, 0, 0, 0.88), 0 0 22px rgba(142, 247, 201, 0.18);
+  pointer-events: auto;
+  width: max-content;
+  max-width: min(440px, calc(100vw - 24px));
+  animation: nxPromptFloat 2.2s ease-in-out infinite;
+}
+.nx-exp-actions.nx-world-floating[data-prompt-kind="anomaly"] {
+  border-color: #b657ff;
+  box-shadow: 0 0 0 1px #000, 0 12px 28px rgba(0, 0, 0, 0.88), 0 0 24px rgba(182, 87, 255, 0.28);
+}
+.nx-exp-actions.nx-world-floating[data-prompt-kind="extract"] {
+  border-color: #ffd23f;
+  box-shadow: 0 0 0 1px #000, 0 12px 28px rgba(0, 0, 0, 0.88), 0 0 26px rgba(255, 210, 63, 0.35);
+}
+.nx-exp-actions.nx-world-floating::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  background: #10091b;
+  border-right: 1px solid #caa95b;
+  border-bottom: 1px solid #caa95b;
+  transform: translateX(-50%) rotate(45deg);
+}
+.nx-exp-actions.nx-world-floating[data-prompt-kind="anomaly"]::after {
+  border-color: #b657ff;
+}
+.nx-exp-actions.nx-world-floating[data-prompt-kind="extract"]::after {
+  border-color: #ffd23f;
+}
+@keyframes nxPromptFloat {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -4px; }
+}
+
 .nx-act-btn {
-  flex: 1 1 200px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
   border-radius: 6px;
   padding: 6px 10px;
   font: 700 10px Rubik, sans-serif;
-  letter-spacing: 0.04em;
-  transition: transform 0.1s, border-color 0.14s, background 0.14s;
+  letter-spacing: 0.03em;
+  text-align: left;
+  transition: transform 0.1s, border-color 0.14s, background 0.14s, box-shadow 0.14s;
 }
 .nx-act-btn:hover { transform: translateY(-1px); }
+.nx-act-btn kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: #0a0612;
+  border: 1px solid currentColor;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 255, 255, 0.08);
+  font: 800 10.5px Rubik, sans-serif;
+  color: inherit;
+  flex-shrink: 0;
+}
+.nx-act-btn span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.nx-act-btn b {
+  font: 800 10.5px Cinzel, serif;
+  letter-spacing: 0.04em;
+}
+.nx-act-btn small {
+  font: 500 9.5px Rubik, sans-serif;
+  opacity: 0.86;
+}
 .nx-act-btn.raise {
   background: linear-gradient(145deg, #162925, #0f1b19);
   border: 1px solid #8ef7c9;
@@ -408,48 +513,70 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
   border: 1px solid #ffd23f;
   color: #ffd23f;
 }
+
 .nx-exp-btn-group {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
+/* 3-Column Compact Horizon Compass Strip */
 .nx-exp-compass {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 6px 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 5px 0;
 }
 .nx-compass-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-  padding: 3px 6px;
-  border-radius: 5px;
-  background: rgba(10, 6, 18, 0.55);
+  gap: 2px;
+  font-size: 10.5px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: rgba(11, 7, 19, 0.72);
+  border: 1px solid rgba(90, 71, 128, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
+.nx-compass-row[data-danger="2"] { border-color: rgba(255, 210, 63, 0.35); }
+.nx-compass-row[data-danger="3"] { border-color: rgba(255, 107, 127, 0.42); }
 .nx-compass-row[data-danger="2"] .nx-c-name { color: #ffd23f; }
 .nx-compass-row[data-danger="3"] .nx-c-name { color: #ff6b7f; }
+.nx-c-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
 .nx-c-dir {
-  font-weight: 700;
-  color: #caa95b;
-  min-width: 42px;
+  font-weight: 800;
+  font-size: 10px;
+  color: #f1d98d;
   text-align: left;
+}
+.nx-c-dist {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #b7a9ce;
+  white-space: nowrap;
 }
 .nx-c-name {
   font-weight: 700;
+  font-size: 10.5px;
   color: #e8dfcf;
-  flex: 1;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nx-c-meta {
-  font-size: 10px;
-  color: #a89bb9;
+  font-size: 9px;
+  color: #9688a8;
+  text-align: left;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .nx-exp-footer {
   display: flex;
@@ -458,19 +585,20 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
   gap: 8px;
   padding-top: 5px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
-  font-size: 10.5px;
+  font-size: 10px;
   color: #b7a9ce;
 }
 .nx-stance-btn {
   cursor: pointer;
-  background: #21152e;
+  background: linear-gradient(160deg, #251736, #160d21);
   border: 1px solid #65428d;
   color: #f1d98d;
   border-radius: 5px;
-  padding: 4px 9px;
-  font: 700 10px Rubik, sans-serif;
+  padding: 4px 8px;
+  font: 700 9.5px Rubik, sans-serif;
   letter-spacing: 0.04em;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   transition: border-color 0.14s, background 0.14s, transform 0.1s;
 }
 .nx-stance-btn:hover { border-color: #ffd23f; background: #2c1c3d; }
@@ -560,16 +688,16 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
 /* ============ EXPLORATION · FIELD GRIMOIRE HUD (1-4) ============ */
 .nx-grim-hud {
   position: fixed;
-  bottom: calc(28px + env(safe-area-inset-bottom));
+  bottom: calc(24px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 6;
   width: min(560px, calc(100vw - 24px));
-  background: linear-gradient(170deg, rgba(19, 12, 30, 0.92), rgba(10, 6, 16, 0.94));
-  border: 1px solid #4a3a68;
-  border-radius: 10px;
+  background: linear-gradient(170deg, rgba(20, 13, 32, 0.93), rgba(10, 6, 17, 0.96));
+  border: 1px solid rgba(122, 98, 50, 0.7);
+  border-radius: 11px;
   padding: 8px 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.78), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px #000, 0 14px 34px rgba(0, 0, 0, 0.82), inset 0 1px 0 rgba(255, 230, 160, 0.12);
   color: #e8dfcf;
   font-family: Rubik, sans-serif;
   font-variant-numeric: tabular-nums;
@@ -594,19 +722,31 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
   white-space: nowrap;
 }
 .nx-grim-ess-track {
+  position: relative;
   flex: 1;
-  height: 7px;
-  background: #0c0714;
-  border: 1px solid #35284e;
+  height: 8px;
+  background: #0a0612;
+  border: 1px solid #3d2e59;
   border-radius: 99px;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 .nx-grim-ess-fill {
+  position: relative;
   height: 100%;
   width: 45%;
-  background: linear-gradient(90deg, #43b581, #8ef7c9);
-  box-shadow: 0 0 10px rgba(142, 247, 201, 0.55);
+  background: linear-gradient(90deg, #2d8a61, #5ad49f 60%, #a8ffdb);
+  box-shadow: 0 0 12px rgba(142, 247, 201, 0.6);
   transition: width 0.14s ease-out;
+}
+.nx-grim-ess-fill::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.35);
 }
 .nx-grim-ess-val {
   font: 700 10.5px Rubik, sans-serif;
@@ -615,13 +755,14 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
   text-align: right;
 }
 .nx-grim-sigils {
-  background: #1a1128;
-  border: 1px solid #7a6232;
+  background: linear-gradient(145deg, #211530, #130b1d);
+  border: 1px solid #caa95b;
   color: #ffd23f;
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: 5px;
-  font: 700 10.5px Rubik, sans-serif;
+  font: 800 10.5px Rubik, sans-serif;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .nx-grim-slots {
   display: grid;
@@ -631,23 +772,50 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
 .nx-grim-slot {
   position: relative;
   cursor: pointer;
-  background: #140d21;
-  border: 1px solid #3b2d54;
+  background: linear-gradient(160deg, #1b122b, #100a1a);
+  border: 1px solid #43335e;
   border-radius: 7px;
-  padding: 6px 7px;
+  padding: 6px 8px;
   text-align: left;
   color: #e8dfcf;
-  transition: transform 0.1s, border-color 0.14s, background 0.14s, opacity 0.14s;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform 0.1s, border-color 0.14s, background 0.14s, opacity 0.14s, box-shadow 0.14s;
+}
+.nx-grim-slot.ready {
+  border-color: rgba(142, 247, 201, 0.45);
+}
+.nx-grim-slot.ready[data-skill="detonate"] {
+  border-color: rgba(255, 94, 108, 0.48);
+}
+.nx-grim-slot.ready[data-skill="dreadknight"] {
+  border-color: rgba(182, 87, 255, 0.48);
+}
+.nx-grim-slot.ready[data-skill="rift"] {
+  border-color: rgba(255, 210, 63, 0.48);
 }
 .nx-grim-slot.ready:hover {
   transform: translateY(-2px);
   border-color: #8ef7c9;
-  background: #1c122e;
+  background: linear-gradient(160deg, #25183b, #150d22);
+  box-shadow: 0 0 0 1px #000, 0 6px 16px rgba(0, 0, 0, 0.7), 0 0 14px rgba(142, 247, 201, 0.22);
 }
-.nx-grim-slot.no-ess { opacity: 0.55; }
-.nx-grim-slot.on-cd { opacity: 0.48; border-color: #2c213d; }
+@keyframes nxGrimCastFlash {
+  0% { transform: scale(0.93) translateY(2px); box-shadow: 0 0 24px rgba(255, 210, 63, 0.85), inset 0 0 14px rgba(255, 210, 63, 0.45); border-color: #ffd23f; }
+  60% { transform: scale(1.03) translateY(-1px); }
+  100% { transform: scale(1) translateY(0); }
+}
+.nx-grim-slot.cast-flash {
+  animation: nxGrimCastFlash 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nx-grim-slot.no-ess { opacity: 0.52; }
+.nx-grim-slot.on-cd { opacity: 0.45; border-color: #2c213d; }
 .nx-grim-key {
-  font: 800 9.5px Rubik, sans-serif;
+  display: inline-block;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(10, 6, 18, 0.75);
+  border: 1px solid rgba(255, 210, 63, 0.4);
+  font: 800 9px Rubik, sans-serif;
   color: #ffd23f;
   float: left;
   margin-right: 4px;
@@ -662,14 +830,14 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
   display: block;
   font: 700 10px Cinzel, serif;
   color: #f1d98d;
-  margin-top: 2px;
+  margin-top: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .nx-grim-sub {
   display: block;
-  font: 400 9.5px Rubik, sans-serif;
+  font: 400 9px Rubik, sans-serif;
   color: #a89bb9;
   white-space: nowrap;
   overflow: hidden;
@@ -681,7 +849,7 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 5, 14, 0.82);
+  background: rgba(8, 5, 14, 0.84);
   border-radius: 6px;
   font: 800 12px Rubik, sans-serif;
   color: #ff9aa5;
@@ -838,21 +1006,13 @@ h1.title { animation: nxTitle 7s ease-in-out infinite; }
 
 @media (max-width: 720px) {
   .nx-exp-poi-grid { grid-template-columns: 1fr; }
+  .nx-exp-compass { grid-template-columns: 1fr; }
   .nx-exp-hud { width: calc(100vw - 24px); top: 44px; padding: 6px 10px; }
   .nx-grim-slots { grid-template-columns: repeat(2, 1fr); }
   .nx-sanctuary-relics { grid-template-columns: 1fr; }
 }
 
 /* ---------- STAGE D1 & D2: SECTOR ANOMALIES & EXPEDITION LEVEL-UP PERK CARDS ---------- */
-.nx-act-btn.anomaly {
-  background: linear-gradient(145deg, #1b122c, #110b1d);
-  border-color: #b657ff;
-  color: #e4c2ff;
-}
-.nx-act-btn.anomaly:hover {
-  background: #271940;
-  border-color: #ffd23f;
-}
 
 .card.nx-exp-perk-card {
   border: 1.5px solid #ffd23f;
